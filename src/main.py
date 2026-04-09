@@ -605,11 +605,13 @@ def count_images_in_classdir(cdir: Path):
 plantnet_class_dirs = [p for p in PLANTNET_TRAIN.iterdir() if p.is_dir()]
 counts = {p.name: count_images_in_classdir(p) for p in plantnet_class_dirs}
 
-MIN_PER_CLASS = 50
+MIN_PER_CLASS = 200
 eligible = [cls for cls, n in counts.items() if n >= MIN_PER_CLASS]
 
-N_SELECT = 200
-selected_classes = random.sample(eligible, k=N_SELECT)
+# En çok görüntüye sahip 100 sınıfı seç (random değil, en kaliteliler)
+eligible_sorted = sorted(eligible, key=lambda cls: counts[cls], reverse=True)
+N_SELECT = 100
+selected_classes = eligible_sorted[:N_SELECT]
 
 print("PlantNet total classes:", len(counts))
 print("Eligible classes:", len(eligible))
@@ -618,9 +620,9 @@ print("Selected classes:", len(selected_classes))
 # -------------------------
 # KOPYALAMA (SINIRLI)
 # -------------------------
-MAX_TRAIN_PER_CLASS = 80
-MAX_VAL_PER_CLASS   = 20
-MAX_TEST_PER_CLASS  = 20
+MAX_TRAIN_PER_CLASS = 200
+MAX_VAL_PER_CLASS   = 40
+MAX_TEST_PER_CLASS  = 40
 
 def copy_limited(src_root: Path, dst_root: Path, class_names, prefix: str, max_per_class: int):
     copied_files = 0
@@ -687,16 +689,9 @@ def copy_all(src_root: Path, dst_root: Path, class_names, prefix: str):
 
     return copied_files, copied_classes
 
-leaf_classes = [p.name for p in (LEAFSNAP_SPLIT / "train").iterdir() if p.is_dir()]
-
-ls_train_files, ls_train_classes = copy_all(LEAFSNAP_SPLIT / "train", OUT_TRAIN, leaf_classes, "leafsnap")
-ls_val_files,   ls_val_classes   = copy_all(LEAFSNAP_SPLIT / "val",   OUT_VAL,   leaf_classes, "leafsnap")
-ls_test_files,  ls_test_classes  = copy_all(LEAFSNAP_SPLIT / "test",  OUT_TEST,  leaf_classes, "leafsnap")
-
-print("\nLeafsnap copied:")
-print(" train files:", ls_train_files, "| classes:", ls_train_classes)
-print(" val files  :", ls_val_files,   "| classes:", ls_val_classes)
-print(" test files :", ls_test_files,  "| classes:", ls_test_classes)
+# Leafsnap devre dışı — beyaz arka plan fotoğrafları modeli karıştırıyor
+# Sadece PlantNet (gerçek doğa fotoğrafları) kullanılıyor
+print("\nLeafsnap atlandı — sadece PlantNet kullanılıyor.")
 
 # -------------------------
 # SON KONTROL
